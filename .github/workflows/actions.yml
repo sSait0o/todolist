@@ -1,90 +1,25 @@
-name: CI/CD Pipeline for Todo App
-
+name: CI
 on:
-  push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
-
+  - pull_request
 jobs:
-  build-and-test:
+  job1:
     runs-on: ubuntu-latest
-    
+    name: build
     steps:
-    - uses: actions/checkout@v3
-    
-    - name: Set up Node.js
-      uses: actions/setup-node@v3
-      with:
-        node-version: '18'
-    
-    # Test Auth Service
-    - name: Install Auth Service dependencies
-      run: |
-        cd services/auth-service
-        npm install
-    
-    - name: Lint Auth Service
-      run: |
-        cd services/auth-service
-        npm run lint || echo "No lint command configured"
-    
-    # Test Todo Service
-    - name: Install Todo Service dependencies
-      run: |
-        cd services/todo-service
-        npm install
-    
-    - name: Lint Todo Service
-      run: |
-        cd services/todo-service
-        npm run lint || echo "No lint command configured"
-    
-    # Test Frontend
-    - name: Install Frontend dependencies
-      run: |
-        cd frontend
-        npm install
-    
-    - name: Build Frontend
-      run: |
-        cd frontend
-        npm run build
-    
-  build-and-push-docker:
-    needs: build-and-test
-    runs-on: ubuntu-latest
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    
-    steps:
-    - uses: actions/checkout@v3
-    
-    - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v2
-    
-    - name: Login to DockerHub
-      uses: docker/login-action@v2
-      with:
-        username: ${{ secrets.DOCKERHUB_USERNAME }}
-        password: ${{ secrets.DOCKERHUB_TOKEN }}
-    
-    - name: Build and push Auth Service
-      uses: docker/build-push-action@v4
-      with:
-        context: ./services/auth-service
-        push: true
-        tags: ${{ secrets.DOCKERHUB_USERNAME }}/auth-service:latest
-    
-    - name: Build and push Todo Service
-      uses: docker/build-push-action@v4
-      with:
-        context: ./services/todo-service
-        push: true
-        tags: ${{ secrets.DOCKERHUB_USERNAME }}/todo-service:latest
-    
-    - name: Build and push Frontend
-      uses: docker/build-push-action@v4
-      with:
-        context: ./frontend
-        push: true
-        tags: ${{ secrets.DOCKERHUB_USERNAME }}/todo-frontend:latest
+      - uses: actions/checkout@v2
+      - name: Set up JDK 17
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'adopt'
+      - name: Build and test
+        working-directory: rent
+        run: |
+          export SHELL=/bin/bash
+          ./gradlew build
+      - name: Docker images
+        working-directory: rent
+        run: |
+          export SHELL=/bin/bash
+          docker build -t rent .
+          docker images
