@@ -14,10 +14,10 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v3
     
-    - name: Set up JDK 11
+    - name: Set up JDK 17
       uses: actions/setup-java@v3
       with:
-        java-version: '11'
+        java-version: '17'
         distribution: 'temurin'
         cache: gradle
     
@@ -26,14 +26,14 @@ jobs:
       run: |
         cd task-service
         chmod +x ./gradlew
-        ./gradlew build
+        ./gradlew clean build
     
     # Build User Service
     - name: Build User Service
       run: |
         cd user-service
         chmod +x ./gradlew
-        ./gradlew build
+        ./gradlew clean build
     
     # Login to Docker Hub
     - name: Login to Docker Hub
