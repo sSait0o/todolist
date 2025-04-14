@@ -1,0 +1,60 @@
+# filepath: /Users/jordy/todolist/.github/workflows/actions.yml
+name: Microservices CI/CD Pipeline
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v3
+        with:
+          java-version: "17"
+          distribution: "temurin"
+          cache: gradle
+
+      # Build Task Service
+      - name: Build Task Service
+        run: |
+          cd task-service
+          chmod +x ./gradlew
+          ./gradlew clean build
+
+      # Build User Service
+      - name: Build User Service
+        run: |
+          cd user-service
+          chmod +x ./gradlew
+          ./gradlew clean build
+
+      # Login to Docker Hub
+      - name: Login to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_TOKEN }}
+
+      # Build and push Task Service Docker image
+      - name: Build and push Task Service
+        uses: docker/build-push-action@v4
+        with:
+          context: ./task-service
+          push: true
+          tags: quentinl569/task-service:latest,quentinl569/task-service:${{ github.sha }}
+
+      # Build and push User Service Docker image
+      - name: Build and push User Service
+        uses: docker/build-push-action@v4
+        with:
+          context: ./user-service
+          push: true
+          tags: quentinl569/user-service:latest,quentinl569/user-service:${{ github.sha }}
